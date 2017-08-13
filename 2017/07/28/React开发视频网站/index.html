@@ -93,16 +93,18 @@
 
 
 
-<meta name="description" content="起因去年买了一个树莓派玩，在上面装了OSMC，犹如发现了新大陆，原来可以在小盒子上看那么多电视内容。">
+<meta name="description" content="想法2016年在西安出差，周末起了沙尘暴，只能在酒店呆着，一时无聊至极。想起之前在家里通过Raspberry Pi观看美剧的软件，心想为什么不自己做一个在线看美剧的网站呢？ 尝试在前些时间，在家里用Raspberry Pi鼓捣过一个家庭影音，其主要的功能是依托OSMC这款开源软件。热心的”jindaxia”制作了一个美剧插件，使得我们能够在电视机大屏幕上有非常好的美剧观影体验。基于这款美剧插件的基">
 <meta property="og:type" content="article">
-<meta property="og:title" content="React开发视频网站">
+<meta property="og:title" content="React看美剧">
 <meta property="og:url" content="http://wilsonwen.github.io/2017/07/28/React开发视频网站/index.html">
 <meta property="og:site_name" content="Wilson&#39;s Blog">
-<meta property="og:description" content="起因去年买了一个树莓派玩，在上面装了OSMC，犹如发现了新大陆，原来可以在小盒子上看那么多电视内容。">
-<meta property="og:updated_time" content="2017-07-28T15:44:17.000Z">
+<meta property="og:description" content="想法2016年在西安出差，周末起了沙尘暴，只能在酒店呆着，一时无聊至极。想起之前在家里通过Raspberry Pi观看美剧的软件，心想为什么不自己做一个在线看美剧的网站呢？ 尝试在前些时间，在家里用Raspberry Pi鼓捣过一个家庭影音，其主要的功能是依托OSMC这款开源软件。热心的”jindaxia”制作了一个美剧插件，使得我们能够在电视机大屏幕上有非常好的美剧观影体验。基于这款美剧插件的基">
+<meta property="og:image" content="http://wilsonwen.github.io/images/web.png">
+<meta property="og:updated_time" content="2017-08-13T07:05:56.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="React开发视频网站">
-<meta name="twitter:description" content="起因去年买了一个树莓派玩，在上面装了OSMC，犹如发现了新大陆，原来可以在小盒子上看那么多电视内容。">
+<meta name="twitter:title" content="React看美剧">
+<meta name="twitter:description" content="想法2016年在西安出差，周末起了沙尘暴，只能在酒店呆着，一时无聊至极。想起之前在家里通过Raspberry Pi观看美剧的软件，心想为什么不自己做一个在线看美剧的网站呢？ 尝试在前些时间，在家里用Raspberry Pi鼓捣过一个家庭影音，其主要的功能是依托OSMC这款开源软件。热心的”jindaxia”制作了一个美剧插件，使得我们能够在电视机大屏幕上有非常好的美剧观影体验。基于这款美剧插件的基">
+<meta name="twitter:image" content="http://wilsonwen.github.io/images/web.png">
 
 
 
@@ -136,7 +138,7 @@
 
 
 
-  <title>React开发视频网站 | Wilson's Blog</title>
+  <title>React看美剧 | Wilson's Blog</title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -273,7 +275,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">React开发视频网站</h1>
+          <h1 class="post-title" itemprop="name headline">React看美剧</h1>
         
 
         <div class="post-meta">
@@ -320,7 +322,34 @@
       
 
       
-        <h1 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h1><p>去年买了一个树莓派玩，在上面装了OSMC，犹如发现了新大陆，原来可以在小盒子上看那么多电视内容。</p>
+        <h1 id="想法"><a href="#想法" class="headerlink" title="想法"></a>想法</h1><p>2016年在西安出差，周末起了沙尘暴，只能在酒店呆着，一时无聊至极。<br>想起之前在家里通过Raspberry Pi观看美剧的软件，心想为什么不自己做一个在线看美剧的网站呢？</p>
+<h1 id="尝试"><a href="#尝试" class="headerlink" title="尝试"></a>尝试</h1><p>在前些时间，在家里用Raspberry Pi鼓捣过一个家庭影音，其主要的功能是依托OSMC这款开源软件。热心的”jindaxia”制作了一个<a href="https://github.com/jindaxia/plugin.video.rrmj" target="_blank" rel="external">美剧插件</a>，使得我们能够在电视机大屏幕上有非常好的美剧观影体验。<br>基于这款美剧插件的基本原理， 只花了半天时间，用js代码拼凑了一个非常简单的<a href="https://github.com/wilsonwen/rrmj_chrome" target="_blank" rel="external">chrome插件</a>。当天我把它Po到了v站上，收到了不少网友的反馈。尽管简单，但非常实用，甚至有人说这种极简风格非常喜欢。<br>但是，插件的上手曲线还是比较大，从而诱发了我做一个网站的设想。</p>
+<h1 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h1><p>直到今年6月了解到《权利的游戏》第七季马上回归了，我才开始着手实现一直以来的想法。<br>设计上有几点考虑</p>
+<ul>
+<li>利用nodejs的全栈来提高开发效率</li>
+<li>利用Github和Heroku来做Devops</li>
+<li>基于Bootstrap实现简洁的网站风格</li>
+<li>前后端分离RESTFul接口访问</li>
+</ul>
+<h3 id="后端"><a href="#后端" class="headerlink" title="后端"></a>后端</h3><p>后端使用Express + Redis，由于网站逻辑简单，RESTFul的接口定的很简单。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">app.get(&apos;/api/search/:title&apos;, function(req, res) &#123;</div><div class="line">    var api = SERVER + &apos;/v3plus/video/search&apos;</div><div class="line">    var body = &#123;&apos;title&apos;: req.params.title &#125;;</div><div class="line">    console.log(&apos;/api/search/&apos;);</div><div class="line"></div><div class="line">    // Check Redis and get from remote</div><div class="line">    cacheAndGet(api, body, getJSON, function(json)&#123;</div><div class="line">        res.send(json);</div><div class="line">    &#125;)</div><div class="line">&#125;);</div></pre></td></tr></table></figure></p>
+<h3 id="前端"><a href="#前端" class="headerlink" title="前端"></a>前端</h3><p>前端使用React + Boostrap，基本上是第一次用React，没想到用起来这么方便易学。<br>使用React-Router做前端路由，再基于<a href="https://www.npmjs.com/package/velocity-react" target="_blank" rel="external">Velocity</a>来做一些简单的动画效果。<br>有了架子，逐个逐个页面去开发，效率也非常高，开发的过程中去发现复用的代码来重构，降低复杂度。<br>基于组件式的开发，使页面更加模块化，可维护性非常高。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">class SeasonList extends Component &#123;</div><div class="line">  constructor(props) &#123;</div><div class="line">  	super(props);</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  render() &#123;</div><div class="line">    let seasonList = []</div><div class="line">    let objList = this.props.objList;</div><div class="line">		for(var i = 0; i &lt; objList.length; i++) &#123;</div><div class="line">			let obj = objList[i];</div><div class="line">			seasonList.push(&lt;Season key=&#123;i&#125; </div><div class="line">				                id=&#123;obj.id&#125; </div><div class="line">                              		cover=&#123;obj.cover&#125; </div><div class="line">                              		title=&#123;obj.title&#125; </div><div class="line">                              		intro=&#123;obj.intro&#125; /&gt; );</div><div class="line">		&#125;</div><div class="line">		  	</div><div class="line">  	return (</div><div class="line">  	  &lt;div&gt;</div><div class="line">  	  	&#123; seasonList &#125;</div><div class="line">  	  &lt;/div&gt;</div><div class="line">  	)</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="Hack"><a href="#Hack" class="headerlink" title="Hack"></a>Hack</h3><p>整个网站的核心其实是在于视频源的获取，实际上网站是不存储任何的视频，所有源都来自于“人人视频”。而人人视频是没有网页版的，我觉得是处于当前大环境打击盗版的原因。<br>后端通过Mock移动端的接口，获取到视频的播放地址。不过要获取这个地址并不容易，首先要能够分析出接口的地址，再者要截取到接口的参数。<br>一般会有以下的方法：</p>
+<ul>
+<li>通过Fiddler来抓手机通信数据包</li>
+<li>通过Wireshark仿真Android的数据包</li>
+<li>逆向移动应用APK来破解</li>
+</ul>
+<p>“人人视频”的接口是RESTFul形式，我使用Fiddler抓包，已经能够把基本功能的接口都逆向出来了，比如“搜索”，“分类”，“剧集信息”等等。<br>最关键的视频源接口，在抓包发现了一个签名字段，而且字段每次都不一样，猜测和时间戳有关系，应该是通过摘要算法把时间戳和其他信息包含在内，在服务端会进行校验。这时就只能通过APK逆向来找到对应的算法。</p>
+<ul>
+<li>dex2jar + jd-gui</li>
+<li><a href="http://www.benf.org/other/cfr/" target="_blank" rel="external">cfr</a></li>
+</ul>
+<p>使用cfr逆向出来的代码，可读性更高，很快就能找到了该签名的摘要算法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">key = &apos;episodeSid=&apos; + req.params.episodeSid;</div><div class="line">key += &apos;quality=&apos; + &apos;super&apos;;</div><div class="line">key += &apos;clientType=&apos; + FAKE_HEADERS[&apos;clientType&apos;];</div><div class="line">key += &apos;clientVersion=&apos; + FAKE_HEADERS[&apos;clientVersion&apos;];</div><div class="line">key += &apos;t=&apos; + FAKE_HEADERS[&apos;t&apos;];</div><div class="line">key += SECRET_KEY;</div><div class="line">headers[&apos;signature&apos;] = md5(key);</div></pre></td></tr></table></figure></p>
+<h3 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h3><p>网站上线以后发现初次加载性能太慢，调查过是因为React将所有组件打包到一个js文件，初次加载时间非常长。<br>优化方法是使用react-router的getComponent来实现按需加载的方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">function asyncComponent(getComponent) &#123;</div><div class="line">  return class AsyncComponent extends React.Component &#123;</div><div class="line">    static Component = null;</div><div class="line">    state = &#123; Component: AsyncComponent.Component &#125;;</div><div class="line"></div><div class="line">    componentWillMount() &#123;</div><div class="line">      if (!this.state.Component) &#123;</div><div class="line">        getComponent().then((&#123;default: Component&#125;) =&gt; &#123;</div><div class="line">          AsyncComponent.Component = Component</div><div class="line">          this.setState(&#123; Component &#125;)</div><div class="line">        &#125;)</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">    render() &#123;</div><div class="line">      const &#123; Component &#125; = this.state</div><div class="line">      if (Component) &#123;</div><div class="line">        return &lt;Component &#123;...this.props&#125; /&gt;</div><div class="line">      &#125;</div><div class="line">      return null</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>与此同时，在后端Express加一个压缩中间件，压缩率可达40%，初次加载时间缩短70%以上。</p>
+<h1 id="Devops"><a href="#Devops" class="headerlink" title="Devops"></a>Devops</h1><p>由于这个网站是业余项目，个人也不打算投入太多精力时间，使用Heroku虽然慢了点，不过免费这一点完胜。另外Heroku支持github的hook，完美的实现了我的Devops要求，每次写完一个feature，只要直接push到Github，什么都不用管，方便！直接！<br>前端代码里加了google-analytics，可以实时对网站的运行情况进行监控。</p>
+<h1 id="Growth-Hack"><a href="#Growth-Hack" class="headerlink" title="Growth Hack"></a>Growth Hack</h1><p>尝试在一些论坛、社交媒体上做过推广，效果不佳。后来在页面也加了社交分享功能，使用的人也不多。目前日均ip在1500左右，顺其自然好了。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>现在的应用开发对于开发人员来说，简化了很多流程。脚手架很多，工具很多，Paas又减少了很多部署的难度，一个网站开发到上线只需2天。<br>将来编程开发上手的难度只会越来越低，一个产品重要的不在是程序员的能力，更多是产品经理的，运营的能力，程序员随时可替代。<br>当然只是初级的，想要不可替代，成为高级是唯一选择。<br>附上项目地址: <a href="https://github.com/wilsonwen/kanmeiju" target="_blank" rel="external">Github</a> <a href="http://kanmeiju.herokuapp.com" target="_blank" rel="external">网站</a><br><img src="/images/web.png" alt="image"></p>
 
       
     </div>
@@ -487,7 +516,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#起因"><span class="nav-number">1.</span> <span class="nav-text">起因</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#想法"><span class="nav-number">1.</span> <span class="nav-text">想法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#尝试"><span class="nav-number">2.</span> <span class="nav-text">尝试</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#设计"><span class="nav-number">3.</span> <span class="nav-text">设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#后端"><span class="nav-number">3.0.1.</span> <span class="nav-text">后端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#前端"><span class="nav-number">3.0.2.</span> <span class="nav-text">前端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hack"><span class="nav-number">3.0.3.</span> <span class="nav-text">Hack</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优化"><span class="nav-number">3.0.4.</span> <span class="nav-text">优化</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Devops"><span class="nav-number">4.</span> <span class="nav-text">Devops</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Growth-Hack"><span class="nav-number">5.</span> <span class="nav-text">Growth Hack</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
 
           </div>
