@@ -254,6 +254,118 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://wilsonwen.github.io/2017/09/10/RocksDB源码 - SuperVersion/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wilson Wen">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wilson's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/10/RocksDB源码 - SuperVersion/" itemprop="url">RocksDB源码 - SuperVersion</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-10T22:04:52+08:00">
+                2017-09-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="SuperVersion"><a href="#SuperVersion" class="headerlink" title="SuperVersion"></a>SuperVersion</h1><p>SuperVersion是RocksDB用来优化LevelDB并发模型的技术。首先我会先回顾一下LevelDB的并发模型，然后再分析SuperVersion是如何对此进行优化的。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="http://wilsonwen.github.io/2017/08/28/RocksDB源码 - Cuckoo Hashing/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -334,6 +446,8 @@
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> HashCuckooRep::Insert(KeyHandle handle) &#123;</div><div class="line">  <span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">float</span> kMaxFullness = <span class="number">0.90f</span>;</div><div class="line"></div><div class="line">  <span class="keyword">auto</span>* key = <span class="keyword">static_cast</span>&lt;<span class="keyword">char</span>*&gt;(handle);</div><div class="line">  <span class="keyword">int</span> initial_hash_id = <span class="number">0</span>;</div><div class="line">  <span class="keyword">size_t</span> cuckoo_path_length = <span class="number">0</span>;</div><div class="line">  <span class="keyword">auto</span> user_key = UserKey(key);</div><div class="line">  <span class="comment">// find cuckoo path</span></div><div class="line">  <span class="keyword">if</span> (FindCuckooPath(key, user_key, cuckoo_path_, &amp;cuckoo_path_length,</div><div class="line">                     initial_hash_id) == <span class="literal">false</span>) &#123;</div><div class="line">    <span class="comment">// if true, then we can't find a vacant bucket for this key even we</span></div><div class="line">    <span class="comment">// have used up all the hash functions.  Then use a backup memtable to</span></div><div class="line">    <span class="comment">// store such key, which will further make this mem-table become</span></div><div class="line">    <span class="comment">// immutable.</span></div><div class="line">    <span class="keyword">if</span> (backup_table_.get() == <span class="literal">nullptr</span>) &#123;</div><div class="line">      <span class="function">VectorRepFactory <span class="title">factory</span><span class="params">(<span class="number">10</span>)</span></span>;</div><div class="line">      backup_table_.reset(</div><div class="line">          factory.CreateMemTableRep(compare_, allocator_, <span class="literal">nullptr</span>, <span class="literal">nullptr</span>));</div><div class="line">      is_nearly_full_ = <span class="literal">true</span>;</div><div class="line">    &#125;</div><div class="line">    backup_table_-&gt;Insert(key);</div><div class="line">    <span class="keyword">return</span>;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// when reaching this point, means the insert can be done successfully.</span></div><div class="line">  occupied_count_++;</div><div class="line">  <span class="keyword">if</span> (occupied_count_ &gt;= bucket_count_ * kMaxFullness) &#123;</div><div class="line">    is_nearly_full_ = <span class="literal">true</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// perform kickout process if the length of cuckoo path &gt; 1.</span></div><div class="line">  <span class="keyword">if</span> (cuckoo_path_length == <span class="number">0</span>) <span class="keyword">return</span>;</div><div class="line"></div><div class="line">  <span class="comment">// the cuckoo path stores the kickout path in reverse order.</span></div><div class="line">  <span class="comment">// so the kickout or displacement is actually performed</span></div><div class="line">  <span class="comment">// in reverse order, which avoids false-negatives on read</span></div><div class="line">  <span class="comment">// by moving each key involved in the cuckoo path to the new</span></div><div class="line">  <span class="comment">// location before replacing it.</span></div><div class="line">  <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">1</span>; i &lt; cuckoo_path_length; ++i) &#123;</div><div class="line">    <span class="keyword">int</span> kicked_out_bid = cuckoo_path_[i - <span class="number">1</span>];</div><div class="line">    <span class="keyword">int</span> current_bid = cuckoo_path_[i];</div><div class="line">    <span class="comment">// since we only allow one writer at a time, it is safe to do relaxed read.</span></div><div class="line">    cuckoo_array_[kicked_out_bid]</div><div class="line">        .store(cuckoo_array_[current_bid].load(<span class="built_in">std</span>::memory_order_relaxed),</div><div class="line">               <span class="built_in">std</span>::memory_order_release);</div><div class="line">  &#125;</div><div class="line">  <span class="keyword">int</span> insert_key_bid = cuckoo_path_[cuckoo_path_length - <span class="number">1</span>];</div><div class="line">  cuckoo_array_[insert_key_bid].store(key, <span class="built_in">std</span>::memory_order_release);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>插入流程相对查找流程较为复杂，前面的论文中以两个哈希函数来解决冲突，RocksDB使用10个哈希函数，所以插入时产生冲突了会出现树形结构的遍历，每个树节点都有10个子节点。FindCuckooPath函数就是使用BFS广度优先搜索在树形结构遍历中查找到空的位置，并记录下查找路径需要推出的位置cuckoo<em>path</em>。<br>FindCuckooPath的实现在下面进行分析。如果FindCuckooPath查找不到空的位置，就尝试在backup_table里面进行插入。如果FindCuckooPath返回true，后面就根据FindCuckooPath填充的cuckoo<em>path</em>依次将路径上的键值往后一个位置移动，最后插入新key。</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">bool</span> HashCuckooRep::FindCuckooPath(<span class="keyword">const</span> <span class="keyword">char</span>* internal_key,</div><div class="line">                                   <span class="keyword">const</span> Slice&amp; user_key, <span class="keyword">int</span>* cuckoo_path,</div><div class="line">                                   <span class="keyword">size_t</span>* cuckoo_path_length,</div><div class="line">                                   <span class="keyword">const</span> <span class="keyword">int</span> initial_hash_id) &#123;</div><div class="line">  <span class="keyword">int</span> bucket_ids[HashCuckooRepFactory::kMaxHashCount];</div><div class="line">  *cuckoo_path_length = <span class="number">0</span>;</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (QuickInsert(internal_key, user_key, bucket_ids, initial_hash_id)) &#123;</div><div class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">  &#125;</div><div class="line">  <span class="comment">// If this step is reached, then it means:</span></div><div class="line">  <span class="comment">// 1. no vacant bucket in any of the possible locations of the input key.</span></div><div class="line">  <span class="comment">// 2. none of the possible locations of the input key has the same user</span></div><div class="line">  <span class="comment">//    key as the input `internal_key`.</span></div><div class="line"></div><div class="line">  <span class="comment">// the front and back indices for the step_queue_</span></div><div class="line">  step_buffer_.reset();</div><div class="line"></div><div class="line">  <span class="keyword">for</span> (<span class="keyword">unsigned</span> <span class="keyword">int</span> hid = initial_hash_id; hid &lt; hash_function_count_; ++hid) &#123;</div><div class="line">    <span class="comment">/// CuckooStep&amp; current_step = step_queue_[front_pos++];</span></div><div class="line">    CuckooStep&amp; current_step = step_buffer_.NextWriteBuffer();</div><div class="line">    current_step.bucket_id_ = bucket_ids[hid];</div><div class="line">    current_step.prev_step_id_ = CuckooStep::kNullStep;</div><div class="line">    current_step.depth_ = <span class="number">1</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">while</span> (step_buffer_.HasNewWrite()) &#123;</div><div class="line">    <span class="keyword">int</span> step_id = step_buffer_.read_index_;</div><div class="line">    <span class="keyword">const</span> CuckooStep&amp; step = step_buffer_.ReadNext();</div><div class="line">    <span class="comment">// Since it's a BFS process, then the first step with its depth deeper</span></div><div class="line">    <span class="comment">// than the maximum allowed depth indicates all the remaining steps</span></div><div class="line">    <span class="comment">// in the step buffer queue will all exceed the maximum depth.</span></div><div class="line">    <span class="comment">// Return false immediately indicating we can't find a vacant bucket</span></div><div class="line">    <span class="comment">// for the input key before the maximum allowed depth.</span></div><div class="line">    <span class="keyword">if</span> (step.depth_ &gt;= cuckoo_path_max_depth_) &#123;</div><div class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// again, we can perform no barrier load safely here as the current</span></div><div class="line">    <span class="comment">// thread is the only writer.</span></div><div class="line">    Slice bucket_user_key =</div><div class="line">        UserKey(cuckoo_array_[step.bucket_id_].load(<span class="built_in">std</span>::memory_order_relaxed));</div><div class="line">    <span class="keyword">if</span> (step.prev_step_id_ != CuckooStep::kNullStep) &#123;</div><div class="line">      <span class="keyword">if</span> (bucket_user_key == user_key) &#123;</div><div class="line">        <span class="comment">// then there is a loop in the current path, stop discovering this path.</span></div><div class="line">        <span class="keyword">continue</span>;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// if the current bucket stores at its nth location, then we only consider</span></div><div class="line">    <span class="comment">// its mth location where m &gt; n.  This property makes sure that all reads</span></div><div class="line">    <span class="comment">// will not miss if we do have data associated to the query key.</span></div><div class="line">    <span class="comment">//</span></div><div class="line">    <span class="comment">// The n and m in the above statement is the start_hid and hid in the code.</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> start_hid = hash_function_count_;</div><div class="line">    <span class="keyword">for</span> (<span class="keyword">unsigned</span> <span class="keyword">int</span> hid = <span class="number">0</span>; hid &lt; hash_function_count_; ++hid) &#123;</div><div class="line">      bucket_ids[hid] = GetHash(bucket_user_key, hid);</div><div class="line">      <span class="keyword">if</span> (step.bucket_id_ == bucket_ids[hid]) &#123;</div><div class="line">        start_hid = hid;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">// must found a bucket which is its current "home".</span></div><div class="line">    assert(start_hid != hash_function_count_);</div><div class="line"></div><div class="line">    <span class="comment">// explore all possible next steps from the current step.</span></div><div class="line">    <span class="keyword">for</span> (<span class="keyword">unsigned</span> <span class="keyword">int</span> hid = start_hid + <span class="number">1</span>; hid &lt; hash_function_count_; ++hid) &#123;</div><div class="line">      CuckooStep&amp; next_step = step_buffer_.NextWriteBuffer();</div><div class="line">      next_step.bucket_id_ = bucket_ids[hid];</div><div class="line">      next_step.prev_step_id_ = step_id;</div><div class="line">      next_step.depth_ = step.depth_ + <span class="number">1</span>;</div><div class="line">      <span class="comment">// once a vacant bucket is found, trace back all its previous steps</span></div><div class="line">      <span class="comment">// to generate a cuckoo path.</span></div><div class="line">      <span class="keyword">if</span> (cuckoo_array_[next_step.bucket_id_].load(<span class="built_in">std</span>::memory_order_relaxed) ==</div><div class="line">          <span class="literal">nullptr</span>) &#123;</div><div class="line">        <span class="comment">// store the last step in the cuckoo path.  Note that cuckoo_path</span></div><div class="line">        <span class="comment">// stores steps in reverse order.  This allows us to move keys along</span></div><div class="line">        <span class="comment">// the cuckoo path by storing each key to the new place first before</span></div><div class="line">        <span class="comment">// removing it from the old place.  This property ensures reads will</span></div><div class="line">        <span class="comment">// not missed due to moving keys along the cuckoo path.</span></div><div class="line">        cuckoo_path[(*cuckoo_path_length)++] = next_step.bucket_id_;</div><div class="line">        <span class="keyword">int</span> depth;</div><div class="line">        <span class="keyword">for</span> (depth = step.depth_; depth &gt; <span class="number">0</span> &amp;&amp; step_id != CuckooStep::kNullStep;</div><div class="line">             depth--) &#123;</div><div class="line">          <span class="keyword">const</span> CuckooStep&amp; prev_step = step_buffer_.steps_[step_id];</div><div class="line">          cuckoo_path[(*cuckoo_path_length)++] = prev_step.bucket_id_;</div><div class="line">          step_id = prev_step.prev_step_id_;</div><div class="line">        &#125;</div><div class="line">        assert(depth == <span class="number">0</span> &amp;&amp; step_id == CuckooStep::kNullStep);</div><div class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</div><div class="line">      &#125;</div><div class="line">      <span class="keyword">if</span> (step_buffer_.IsFull()) &#123;</div><div class="line">        <span class="comment">// if true, then it reaches maxinum number of cuckoo search steps.</span></div><div class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// tried all possible paths but still not unable to find a cuckoo path</span></div><div class="line">  <span class="comment">// which path leads to a vacant bucket.</span></div><div class="line">  <span class="keyword">return</span> <span class="literal">false</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>QuickInsert快速的搜索key对应的10个哈希位置是否有位置可以插入。<br>如果没有查找到，那么就要开始使用BFS算法进行搜索。其中CuckooStep用来记录可以回退的步骤，step<em>buffer</em>则保存了BFS搜索的队列。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span> (<span class="keyword">unsigned</span> <span class="keyword">int</span> hid = initial_hash_id; hid &lt; hash_function_count_; ++hid)</div></pre></td></tr></table></figure></p>
+<p>将搜索key的10个哈希位置都入到队列，后面While循环进入BFS搜索，每次从队列头取出一个步骤，如果步骤的深度已经超过cuckoo_path_max<em>depth</em>返回。如果该位置的key和搜索的key相同，则出现了循环，跳过该次搜索。以上条件都不满足，将改步骤的其他哈希位置（由于cuckooHash总是从最低位的哈希函数开始插入，我们只需要从大于当前哈希的函数的位置开始搜索）入到队列。<br>一旦找到了一个空的哈希位置，从step<em>buffer</em>中回溯出搜索的路径存到cuckoo_path。</p>
 
           
         
@@ -623,6 +737,409 @@
 
 
     
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://wilsonwen.github.io/2014/03/30/2014-03-30-bytes-alignment/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wilson Wen">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wilson's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2014/03/30/2014-03-30-bytes-alignment/" itemprop="url">字节对齐引发的血案</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2014-03-30T21:45:47+08:00">
+                2014-03-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>最近的项目因为引入了合作方的代码，多了很多疑难问题，但这些问题也非常有意思，Debug这些问题的过程给了我很多乐趣。</p>
+<p>这篇博客是关于一个由#pragma引起的问题，Debug过程中充满了挑战和惊喜，不停的需找线索的过程，也是一个不断提升自身水平的过程。</p>
+<h3 id="Segmentaion-Fault"><a href="#Segmentaion-Fault" class="headerlink" title="Segmentaion Fault"></a>Segmentaion Fault</h3><p>在某次提交代码以后，我们跑回归测试用例，出现了segmentation fault的情况。马上gdb attach上去看进程调用栈。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Program received signal SIGSEGV, Segmentation fault.</div><div class="line"><span class="number">0x08048562</span> in Component::<span class="built_in">set</span> (<span class="keyword">this</span>=<span class="number">0x18000000</span>) at pragma.cpp:<span class="number">7</span></div><div class="line"><span class="number">7</span>   <span class="keyword">this</span>-&gt;flag = <span class="number">1</span>;</div><div class="line">(gdb) bt</div><div class="line">#<span class="number">0</span>  <span class="number">0x08048562</span> in Component::<span class="built_in">set</span> (<span class="keyword">this</span>=<span class="number">0x18000000</span>) at pragma.cpp:<span class="number">7</span></div></pre></td></tr></table></figure>
+<p>可以看到，第7行的赋值语句导致了SegFault，细看就能看到this指针是一个非法值0x18000000，定位到这一步以后，我们做了第一次推测，<strong>很有可能是踩内存了。</strong></p>
+<p>为了证明我们的推测，gdb返回上一层堆栈打印Component类的指针，结果出乎我们意料。<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">(gdb) f 1</div><div class="line">#1  0x08048552 in main () at main.cpp:9</div><div class="line">9   board-&gt;_com-&gt;set();</div><div class="line">(gdb) p *board</div><div class="line">$3 = &#123;price = 0 '\000', _com = 0x804b018&#125;</div></pre></td></tr></table></figure></p>
+<p>这时看到的Component类指针_com是正常的，我一度非常怀疑g++的编译器出问题了，我甚至翻阅了很多关于C++编译成员函数的资料，事实证明：<strong>一切问题都应该先从自身上找原因。</strong></p>
+<p>所以，我又把board的内存打印出来，看是不是有什么线索。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">(gdb) x/<span class="number">32</span>xb board</div><div class="line"><span class="number">0x804b008</span>:  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x18</span>  <span class="number">0xb0</span>  <span class="number">0x04</span>  <span class="number">0x08</span></div><div class="line"><span class="number">0x804b010</span>:  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x11</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span></div><div class="line"><span class="number">0x804b018</span>:  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span></div><div class="line"><span class="number">0x804b020</span>:  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0xe1</span>  <span class="number">0x0f</span>  <span class="number">0x02</span>  <span class="number">0x00</span></div></pre></td></tr></table></figure></p>
+<p>细心的话会发现，原本_com的指针为0x804b018，即第一行后4个字节。而this指针为0x18000000，正好是第一行从第二个字节开始的4个字节。似乎有点头绪了…</p>
+<h3 id="汇编"><a href="#汇编" class="headerlink" title="汇编"></a>汇编</h3><p>从上面的初步分析，我们基本锁定了问题的范围，在函数调用前，指针是正常的，进入函数以后指针变了。难道是函数调用出了问题？为了进一步分析，可以使用gdb的汇编调试功能，如果不熟悉的可以参考<a href="http://lenky.info/archives/2012/05/30/1694" target="_blank" rel="external">Lenky的博客</a>。以下打印出调用set的汇编代码：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">(gdb) disassemble main</div><div class="line">Dump of assembler code for function main():</div><div class="line">   0x08048534 &lt;+0&gt;: push   %ebp</div><div class="line">   0x08048535 &lt;+1&gt;:  mov    %esp,%ebp</div><div class="line">   0x08048537 &lt;+3&gt;: and    $0xfffffff0,%esp</div><div class="line">   0x0804853a &lt;+6&gt;:  sub    $0x10,%esp</div><div class="line">   0x0804853d &lt;+9&gt;: call   0x804858a &lt;Board::init()&gt;</div><div class="line">   0x08048542 &lt;+14&gt;: mov    0x804a028,%eax</div><div class="line">   0x08048547 &lt;+19&gt;:  mov    0x1(%eax),%eax</div><div class="line">   0x0804854a &lt;+22&gt;: mov    %eax,(%esp)</div><div class="line">   0x0804854d &lt;+25&gt;:  call   0x804855c &lt;Component::set()&gt;</div><div class="line">=&gt; 0x08048552 &lt;+30&gt;: mov    $0x0,%eax</div><div class="line">   0x08048557 &lt;+35&gt;: leave  </div><div class="line">   0x08048558 &lt;+36&gt;:  ret    </div><div class="line">End of assembler dump.</div></pre></td></tr></table></figure></p>
+<p>在0x08048547行，这一行代码就是获得_com指针，前面我们看到board的偏移4个字节以后取到Component的指针，而这一行汇编代码只偏移1个字节。刹那间，4个字突然跳到我的脑海里 – <strong>字节对齐</strong>。</p>
+<p>我们知道在C语言里，在没有声明字节对齐的情况下，编译器会按4字节或8字节对齐。<br>Board类的结构如下<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Board</span></span></div><div class="line">&#123;</div><div class="line"><span class="keyword">public</span>:</div><div class="line">  Board();</div><div class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span></span>;</div><div class="line"></div><div class="line">  <span class="keyword">char</span> price;</div><div class="line">  Component *_com;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>这里没有声明字节对齐的方式，系统是32位的，理应按4字节对齐，这个与我们看到的Board的内存是一致的。可是为什么在调用的地方，汇编代码是按1字节来偏移呢？编译器编译调用点时理解这个结构是1字节对齐，而该结构定义并没有声明1字节对齐，那肯定是别的地方影响了。结果一翻看前面几个头文件，居然有一处这样的代码：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">pragma</span> pack(push,1)</span></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">foo</span></span></div><div class="line">&#123;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><strong>这一出#pragma push没有对应的#pragma pop</strong>，这个头文件在Board的头文件之前，所以导致Board结构也是按1字节对齐，而由于board申请内存定义的地方没有这个问题，是按4字节对齐，所以才导致了this指针错乱的结果。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>终于真相大白了，#pragma引发的血案宣布告破。</p>
+<p>对于该编程问题的引入，我就不说什么了。对于该问题的调试，我总结出的结论是：以怀疑一切的眼光看待问题，同时要多方面去考虑问题，这样“问题”就不是什么“问题”了。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://wilsonwen.github.io/2014/03/03/2014-03-03-performance-optimization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wilson Wen">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wilson's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2014/03/03/2014-03-03-performance-optimization/" itemprop="url">性能优化</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2014-03-03T21:45:47+08:00">
+                2014-03-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>从去年12月份开始至今年年初，做了一个高性能网络处理服务器的性能优化的项目。在此简单记录<br>项目过程中的一些知识与方法，以备将来参考之用。</p>
+<h3 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h3><p>这个“高性能处理服务器”其实一点也不高性能。为什么呢，其中夹杂很多历史遗留原因。我厂的<br>项目存在很多“售前吹牛逼，开发很苦逼”的现象。这个产品也一样，许多年前，为了满足客户要求，<br>没有在性能上有过多的考虑。以致许多年后的今天，客户的要求变了，产品满足不了。<br>服务器处理的流程很简单：</p>
+<p></p><p><strong>  网络收包 =&gt; 协议处理 =&gt; 分发 </strong></p><br>我们可以认为这个服务器完全是一个CPU Bound的程序，没有过多的IO，也没有大量的并发连接。<br>需要留意的是CPU的处理能力，网络的处理能力以及内存的使用。<p></p>
+<h3 id="什么是性能优化"><a href="#什么是性能优化" class="headerlink" title="什么是性能优化"></a>什么是性能优化</h3><p>用程序语言来表达的话：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">while</span>( performance != expect  ) &#123;</div><div class="line">  <span class="comment">/* 查找系统性能瓶颈 */</span></div><div class="line">  find(bottlenecks);</div><div class="line">  <span class="comment">/* 优化系统性能瓶颈 */</span></div><div class="line">  optimize(bottlenecks);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>性能优化，即在性能达不到预期时，查找性能瓶颈并进行优化，重复这一过程知道达到要求。性能瓶颈的概念<br>我们可以借助维基百科的定义来理解。</p>
+<blockquote>
+<p>系统瓶颈(<a href="http://en.wikipedia.org/wiki/Bottleneck" target="_blank" rel="external">Bottleneck</a>): 整个系统的性能或容量，受少数部件或资源的限制。<br>从软件的角度上说，资源指的是CPU、内存、磁盘、网络等；部件指的是某些模块，某些流程。</p>
+</blockquote>
+<ul>
+<li>查找系统性能瓶颈：通过性能分析工具、热点分析工具等手段追踪瓶颈，甚至代码Review也是手段之一。</li>
+<li>优化系统性能瓶颈：采用负载均衡，算法优化，系统调优等方法优化系统性能瓶颈。<br>下面我会以先描述项目过程中的实践，再提取理论总结的方式来介绍。</li>
+</ul>
+<h3 id="如何查找瓶颈"><a href="#如何查找瓶颈" class="headerlink" title="如何查找瓶颈"></a>如何查找瓶颈</h3><h4 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h4><p>我拿到这个项目的时候，领导只是说了四个字：<strong>“性能不足”</strong>。</p>
+<ol>
+<li>我做的第一件事是量化系统，把系统的各个处理流程都进行量化：资源的使用，处理的负荷，处理的时间等。<br>例如在网络收包的每个模块，每个线程，对每一种数据包都进行了统计跟踪，从而对系统的热点能有一个直观的理解。</li>
+<li>接着，就是准备优化前的各项工作，自动化测试工程、性能测试环境、回归测试用例等等。这些工作也相当重要，<br>我们可以在每次修改以后立马知道性能是否提升了，功能是否影响了。然后就可以进入前面程序描述的逻辑了。</li>
+<li>前面说过，这是一个CPU Bound的系统。那么，先执行top命令看下CPU的负荷情况，马上就发现了某个CPU usr跑到100%了。<br>同时对应的量化指标也出现了丢包，显然，这里的CPU就是目前系统的一处瓶颈。对于这种情况下面“优化”一节，具体地描述了优化的手段。</li>
+<li>top提供的信息非常宏观，不能很好的地位到瓶颈部件，只是知道系统整体的情况。所以我使用oprofile对系统的运行情况进行跟踪，<br>当我拿到profile的结果时就很明确的知道了哪些代码是热点，进而分析出哪些是需要优化的。</li>
+</ol>
+<p>在我整个项目的过程，最主要的两个工具就是top和oprofile。其实如果对系统熟悉的话，只需top和量化的系统指标,<br>就能对系统的运行情况就能有足够的了解。再者，就是对操作系统知识的理解，如各种锁如何在cpu上体现、网络io和磁盘io在cpu上的体现、<br>内存的使用在什么地方等等。进一步分析时，就可以配合一些其他工具sar、vmstat等来发现问题。</p>
+<h4 id="理论"><a href="#理论" class="headerlink" title="理论"></a>理论</h4><p>谈及理论，不得不提到Brendan Gregg，以下是他写的书和Slide：</p>
+<ul>
+<li><a href="http://www.amazon.com/Systems-Performance-Enterprise-Brendan-Gregg/dp/0133390098" target="_blank" rel="external">Systems Performance: Enterprise and the Cloud</a></li>
+<li><a href="http://www.joyent.com/blog/linux-performance-analysis-and-tools-brendan-gregg-s-talk-at-scale-11x" target="_blank" rel="external"><br>Linux performance analysis and tools </a><image src="/images/20140303-linux-performance.png">
+
+</image></li>
+</ul>
+<blockquote>
+<p>我总结出的观点是：理解“系统”，理解“系统”。</p>
+</blockquote>
+<p>第一个系统指的是需要优化的系统软件；第二个系统指的是操作系统。Brendan的Slide就像一个理解系统软件的工具箱，<br>用好了这些工具就理解了第一个“系统”；Brendan的书对于我就是一本操作系统性能的知识手册，读好了这本书就理解了第二个“系统”；</p>
+<h3 id="如何优化瓶颈"><a href="#如何优化瓶颈" class="headerlink" title="如何优化瓶颈"></a>如何优化瓶颈</h3><h4 id="实践-1"><a href="#实践-1" class="headerlink" title="实践"></a>实践</h4><h5 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h5><p>前面提到发现的第一个瓶颈是某个核的CPU负荷过载了，而我们系统是运行在32核的服务器上的，其余的核远远未到满负荷。<br>因此，我需要做的是将过载的CPU的负荷均衡到其他CPU上。而这个均衡的方法就要结合具体业务来实施了，在我们的系统里，我们通过oprofile很快<br>定位到了过载的模块，再进一步分析，发现系统的处理模块居然是单线程运行的，系统的设计者肯定没有预想到scale out的情景。<br>此时，我们需要梳理业务的处理流程，分析出处理模块里的子模块哪些可以多线程运行，哪些是必须单线程运行的。（此处不得不提的是，对于较为完美<br>的scale out设计应该是各个模块都支持多线程并发运行，但由于历史遗留问题，该系统的的确确存在单点瓶颈）</p>
+<ol>
+<li><p>第一次切分</p>
+<image src="/images/20140303-slice.png">
+</image></li>
+<li><p>第二次切分</p>
+<image src="/images/20140303-scale.png">
+
+</image></li>
+</ol>
+<p>经过切分过后的系统，能够将服务器上的其他核利用起来，我们可以使用set_schedaffinity来设置线程CPU的亲和力，使各线程尽量保持在同一个<br>CPU上运行，减少线程切换带来的消耗。</p>
+<h5 id="Cache优化"><a href="#Cache优化" class="headerlink" title="Cache优化"></a>Cache优化</h5><p>当我们将单线程切分为多线程以后，会引入线程间通信的问题。线程间的通信，经验里使用“无锁环形队列”作为桥梁是最为简单且高效的实现方式。（可以<br>参加<a href="http://www.github.com/wilsonwen/lockfreekit/" target="_blank" rel="external">http://www.github.com/wilsonwen/lockfreekit/</a>)最理想的方式是内存零拷贝的实现方式，就是我们常说的zero copy。不过在优化过程中，发现历史<br>遗留的模块存在太多的自定义接口，没办法实现零拷贝，各线程交互时需要拷贝内存。这里就引入Cache优化的问题，如何部署线程才能使得内存拷贝是Cache<br>友好的呢？下面这张图或许能告诉我们。</p>
+<image src="/images/20140303-cache.jpg">
+
+<p>为使内存拷贝尽量高效，有交互的线程要尽量放在同一个物理CPU上，这样对于L3 cache是友好的。对于scale out的同功能多线程可尽量发在同一个物理核上，<br>这样对L2 cache是友好的。</p>
+<h4 id="理论-1"><a href="#理论-1" class="headerlink" title="理论"></a>理论</h4><p>对于多核负载均衡，Intel有本书<a href="http://www.amazon.com/Multi-Core-Programming-Increasing-Performance-Multithreading/dp/0976483246" target="_blank" rel="external">《Multi-Core Programming Increasing Performance through Software Multithreading》</a><br>有非常清楚的讲解。此外，在系统设计的过程中，应该尽量避免单点的出现，针对高负荷的模块<br>更要做好scale out的设计。</p>
+<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>优化过程遇到过一些其他类型的性能问题：</p>
+<ol>
+<li>操作系统的IO cache导致内存swap in/out严重，影响了系统的正常运行。<br>该问题在褚霸的<a href="http://blog.yufeng.info/archives/1917" target="_blank" rel="external">博客</a>有消息的描述。</li>
+</ol>
+</image>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://wilsonwen.github.io/2014/01/08/2014-01-08-blog-started/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wilson Wen">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wilson's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2014/01/08/2014-01-08-blog-started/" itemprop="url">开博：重新出发</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2014-01-08T21:45:47+08:00">
+                2014-01-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在工作中，一直在做网络协议相关的编程，没有机会学习到更多的DB知识。<br>后来开始在github上混，偶然读到<a href="https://github.com/antirez/redis" target="_blank" rel="external">redis</a>的源码，antirez写得如此简洁清晰，让我慢慢懂了些nosql db的原理。<br>最近，手上事情渐渐少了，闲暇之余翻翻博客，翻翻github。其中<a href="http://www.wzxue.com/" target="_blank" rel="external">麦子迈</a>的博客给了我很多启发，<br>其博客介绍了各式各样的DB系统，顿时让我觉得DB的世界真是丰富多彩。所以博客的开篇，也作为DB世界的开篇，开始一段对未知世界探索的旅程。</p>
+<h3 id="学习计划"><a href="#学习计划" class="headerlink" title="学习计划"></a>学习计划</h3><p>在此之前，翻阅过不少相关程序的源码(redis, levelDB, nessDB, rocksdb)等等。<br>但是认真学习过的只有redis，其代码相对较为直白。由于缺乏坚实C++基础，levelDB看的非常吃力，所以后面也要同时补全C++的知识。<br><br><br>学习阶段：</p>
+<p><ul><br>    <li><br>        <a href="http://www.gnu.org.ua/software/gdbm" target="_blank" rel="external">gdbm</a><br>    </li><br>    <li><br>        <a href="http://fallabs.com/tokyocabinet/" target="_blank" rel="external">Tokyo Cabinet</a><br>    </li><br>    <li><br>        <a href="https://github.com/shuttler/nessDB" target="_blank" rel="external">nessDB</a><br>    </li><br>    <li><br>        <a href="https://code.google.com/p/leveldb/" target="_blank" rel="external">levelDB</a><br>    </li><br>    <li><br>        <a href="https://github.com/facebook/rocksdb/" target="_blank" rel="external">rocksdb</a><br>    </li><br></ul></p>
+<h3 id="未完待续"><a href="#未完待续" class="headerlink" title="未完待续"></a>未完待续</h3>
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
   </section>
 
   
@@ -668,12 +1185,21 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-count">7</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
           
 
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
           
 
           
@@ -681,7 +1207,7 @@
             
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">4</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>

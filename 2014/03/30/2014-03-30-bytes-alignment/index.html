@@ -1,0 +1,710 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="最近的项目因为引入了合作方的代码，多了很多疑难问题，但这些问题也非常有意思，Debug这些问题的过程给了我很多乐趣。 这篇博客是关于一个由#pragma引起的问题，Debug过程中充满了挑战和惊喜，不停的需找线索的过程，也是一个不断提升自身水平的过程。 Segmentaion Fault在某次提交代码以后，我们跑回归测试用例，出现了segmentation fault的情况。马上gdb attac">
+<meta property="og:type" content="article">
+<meta property="og:title" content="字节对齐引发的血案">
+<meta property="og:url" content="http://wilsonwen.github.io/2014/03/30/2014-03-30-bytes-alignment/index.html">
+<meta property="og:site_name" content="Wilson&#39;s Blog">
+<meta property="og:description" content="最近的项目因为引入了合作方的代码，多了很多疑难问题，但这些问题也非常有意思，Debug这些问题的过程给了我很多乐趣。 这篇博客是关于一个由#pragma引起的问题，Debug过程中充满了挑战和惊喜，不停的需找线索的过程，也是一个不断提升自身水平的过程。 Segmentaion Fault在某次提交代码以后，我们跑回归测试用例，出现了segmentation fault的情况。马上gdb attac">
+<meta property="og:updated_time" content="2017-09-10T03:37:10.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="字节对齐引发的血案">
+<meta name="twitter:description" content="最近的项目因为引入了合作方的代码，多了很多疑难问题，但这些问题也非常有意思，Debug这些问题的过程给了我很多乐趣。 这篇博客是关于一个由#pragma引起的问题，Debug过程中充满了挑战和惊喜，不停的需找线索的过程，也是一个不断提升自身水平的过程。 Segmentaion Fault在某次提交代码以后，我们跑回归测试用例，出现了segmentation fault的情况。马上gdb attac">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"right","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://wilsonwen.github.io/2014/03/30/2014-03-30-bytes-alignment/"/>
+
+
+
+
+
+  <title>字节对齐引发的血案 | Wilson's Blog</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Wilson's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://wilsonwen.github.io/2014/03/30/2014-03-30-bytes-alignment/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Wilson Wen">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wilson's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">字节对齐引发的血案</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2014-03-30T21:45:47+08:00">
+                2014-03-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近的项目因为引入了合作方的代码，多了很多疑难问题，但这些问题也非常有意思，Debug这些问题的过程给了我很多乐趣。</p>
+<p>这篇博客是关于一个由#pragma引起的问题，Debug过程中充满了挑战和惊喜，不停的需找线索的过程，也是一个不断提升自身水平的过程。</p>
+<h3 id="Segmentaion-Fault"><a href="#Segmentaion-Fault" class="headerlink" title="Segmentaion Fault"></a>Segmentaion Fault</h3><p>在某次提交代码以后，我们跑回归测试用例，出现了segmentation fault的情况。马上gdb attach上去看进程调用栈。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Program received signal SIGSEGV, Segmentation fault.</div><div class="line"><span class="number">0x08048562</span> in Component::<span class="built_in">set</span> (<span class="keyword">this</span>=<span class="number">0x18000000</span>) at pragma.cpp:<span class="number">7</span></div><div class="line"><span class="number">7</span>   <span class="keyword">this</span>-&gt;flag = <span class="number">1</span>;</div><div class="line">(gdb) bt</div><div class="line">#<span class="number">0</span>  <span class="number">0x08048562</span> in Component::<span class="built_in">set</span> (<span class="keyword">this</span>=<span class="number">0x18000000</span>) at pragma.cpp:<span class="number">7</span></div></pre></td></tr></table></figure>
+<p>可以看到，第7行的赋值语句导致了SegFault，细看就能看到this指针是一个非法值0x18000000，定位到这一步以后，我们做了第一次推测，<strong>很有可能是踩内存了。</strong></p>
+<p>为了证明我们的推测，gdb返回上一层堆栈打印Component类的指针，结果出乎我们意料。<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">(gdb) f 1</div><div class="line">#1  0x08048552 in main () at main.cpp:9</div><div class="line">9   board-&gt;_com-&gt;set();</div><div class="line">(gdb) p *board</div><div class="line">$3 = &#123;price = 0 '\000', _com = 0x804b018&#125;</div></pre></td></tr></table></figure></p>
+<p>这时看到的Component类指针_com是正常的，我一度非常怀疑g++的编译器出问题了，我甚至翻阅了很多关于C++编译成员函数的资料，事实证明：<strong>一切问题都应该先从自身上找原因。</strong></p>
+<p>所以，我又把board的内存打印出来，看是不是有什么线索。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">(gdb) x/<span class="number">32</span>xb board</div><div class="line"><span class="number">0x804b008</span>:  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x18</span>  <span class="number">0xb0</span>  <span class="number">0x04</span>  <span class="number">0x08</span></div><div class="line"><span class="number">0x804b010</span>:  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x11</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span></div><div class="line"><span class="number">0x804b018</span>:  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span></div><div class="line"><span class="number">0x804b020</span>:  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0x00</span>  <span class="number">0xe1</span>  <span class="number">0x0f</span>  <span class="number">0x02</span>  <span class="number">0x00</span></div></pre></td></tr></table></figure></p>
+<p>细心的话会发现，原本_com的指针为0x804b018，即第一行后4个字节。而this指针为0x18000000，正好是第一行从第二个字节开始的4个字节。似乎有点头绪了…</p>
+<h3 id="汇编"><a href="#汇编" class="headerlink" title="汇编"></a>汇编</h3><p>从上面的初步分析，我们基本锁定了问题的范围，在函数调用前，指针是正常的，进入函数以后指针变了。难道是函数调用出了问题？为了进一步分析，可以使用gdb的汇编调试功能，如果不熟悉的可以参考<a href="http://lenky.info/archives/2012/05/30/1694" target="_blank" rel="external">Lenky的博客</a>。以下打印出调用set的汇编代码：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">(gdb) disassemble main</div><div class="line">Dump of assembler code for function main():</div><div class="line">   0x08048534 &lt;+0&gt;: push   %ebp</div><div class="line">   0x08048535 &lt;+1&gt;:  mov    %esp,%ebp</div><div class="line">   0x08048537 &lt;+3&gt;: and    $0xfffffff0,%esp</div><div class="line">   0x0804853a &lt;+6&gt;:  sub    $0x10,%esp</div><div class="line">   0x0804853d &lt;+9&gt;: call   0x804858a &lt;Board::init()&gt;</div><div class="line">   0x08048542 &lt;+14&gt;: mov    0x804a028,%eax</div><div class="line">   0x08048547 &lt;+19&gt;:  mov    0x1(%eax),%eax</div><div class="line">   0x0804854a &lt;+22&gt;: mov    %eax,(%esp)</div><div class="line">   0x0804854d &lt;+25&gt;:  call   0x804855c &lt;Component::set()&gt;</div><div class="line">=&gt; 0x08048552 &lt;+30&gt;: mov    $0x0,%eax</div><div class="line">   0x08048557 &lt;+35&gt;: leave  </div><div class="line">   0x08048558 &lt;+36&gt;:  ret    </div><div class="line">End of assembler dump.</div></pre></td></tr></table></figure></p>
+<p>在0x08048547行，这一行代码就是获得_com指针，前面我们看到board的偏移4个字节以后取到Component的指针，而这一行汇编代码只偏移1个字节。刹那间，4个字突然跳到我的脑海里 – <strong>字节对齐</strong>。</p>
+<p>我们知道在C语言里，在没有声明字节对齐的情况下，编译器会按4字节或8字节对齐。<br>Board类的结构如下<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Board</span></span></div><div class="line">&#123;</div><div class="line"><span class="keyword">public</span>:</div><div class="line">  Board();</div><div class="line">  <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span></span>;</div><div class="line"></div><div class="line">  <span class="keyword">char</span> price;</div><div class="line">  Component *_com;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>这里没有声明字节对齐的方式，系统是32位的，理应按4字节对齐，这个与我们看到的Board的内存是一致的。可是为什么在调用的地方，汇编代码是按1字节来偏移呢？编译器编译调用点时理解这个结构是1字节对齐，而该结构定义并没有声明1字节对齐，那肯定是别的地方影响了。结果一翻看前面几个头文件，居然有一处这样的代码：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">pragma</span> pack(push,1)</span></div><div class="line"><span class="class"><span class="keyword">struct</span> <span class="title">foo</span></span></div><div class="line">&#123;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><strong>这一出#pragma push没有对应的#pragma pop</strong>，这个头文件在Board的头文件之前，所以导致Board结构也是按1字节对齐，而由于board申请内存定义的地方没有这个问题，是按4字节对齐，所以才导致了this指针错乱的结果。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>终于真相大白了，#pragma引发的血案宣布告破。</p>
+<p>对于该编程问题的引入，我就不说什么了。对于该问题的调试，我总结出的结论是：以怀疑一切的眼光看待问题，同时要多方面去考虑问题，这样“问题”就不是什么“问题”了。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/03/03/2014-03-03-performance-optimization/" rel="next" title="性能优化">
+                <i class="fa fa-chevron-left"></i> 性能优化
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/06/08/初为人父/" rel="prev" title="初为人父">
+                初为人父 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="Wilson Wen" />
+          <p class="site-author-name" itemprop="name">Wilson Wen</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/wilsonwen" target="_blank" title="Github">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Github
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Segmentaion-Fault"><span class="nav-number">1.</span> <span class="nav-text">Segmentaion Fault</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#汇编"><span class="nav-number">2.</span> <span class="nav-text">汇编</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Wilson Wen</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
